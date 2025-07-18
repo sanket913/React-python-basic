@@ -1,8 +1,15 @@
 import http.server
 import socketserver
-import os
 import json
 from datetime import datetime
+import google.generativeai as genai  # Gemini import
+
+# ========== Gemini Configuration ==========
+GOOGLE_API_KEY = "AIzaSyBwY8Sb0b2nOKM7e-7-7QI8QxfPSStjSZc"  # Use your actual key here
+genai.configure(api_key=GOOGLE_API_KEY)
+
+# Load the model
+model = genai.GenerativeModel("gemini-pro")
 
 PORT = 5000
 
@@ -25,21 +32,16 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
                 user_message = data.get('message', '').strip()
                 print(f"[User] {user_message}")
 
-                # Format time for reply
+                # Call Gemini API
+                gemini_response = model.generate_content(user_message)
+                bot_reply = gemini_response.text.strip()
+
+                # Prepare response
                 timestamp = datetime.now().strftime("%H:%M")
-
-                # Example logic: static response based on input
-                if user_message.lower() in ['hi', 'hello']:
-                    reply_text = "Hello! How can I help you today?"
-                elif user_message.lower() in ['bye', 'exit']:
-                    reply_text = "Goodbye! Have a nice day 😊"
-                else:
-                    reply_text = f"You said: {user_message}"
-
                 response = {
                     "reply": {
                         "sender": "bot",
-                        "message": reply_text,
+                        "message": bot_reply,
                         "time": timestamp
                     }
                 }
@@ -65,5 +67,5 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
 
 # Run the server
 with socketserver.TCPServer(("", PORT), MyHandler) as httpd:
-    print(f"Serving at http://0.0.0.0:{PORT}")
+    print(f"✅ Server running at http://0.0.0.0:{PORT}")
     httpd.serve_forever()
