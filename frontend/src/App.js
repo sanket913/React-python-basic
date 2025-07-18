@@ -1,70 +1,64 @@
-import React, { useState, useEffect, useRef } from 'react';
-import './App.css';
+import React, { useState } from "react";
+import "./App.css";
 
-function App() {
-  const [input, setInput] = useState('');
-  const [messages, setMessages] = useState([]); // [{ sender: 'user' | 'bot', text: '' }]
-  const messagesEndRef = useRef(null);
+const App = () => {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
 
-  const sendMessage = async () => {
+  const handleSend = async (e) => {
+    e.preventDefault();
     if (!input.trim()) return;
 
-    const userMsg = { sender: 'user', text: input };
-    setMessages(prev => [...prev, userMsg]);
+    const userMessage = {
+      sender: "user",
+      message: input,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
 
     try {
-      const res = await fetch('https://react-python-basic.onrender.com/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("https://react-python-basic.onrender.com/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input }),
       });
 
       const data = await res.json();
-      const botMsg = { sender: 'bot', text: data.reply };
-      setMessages(prev => [...prev, botMsg]);
+      const botMessage = data.reply;
+
+      setMessages((prev) => [...prev, botMessage]);
     } catch (err) {
-      setMessages(prev => [...prev, { sender: 'bot', text: 'Server error.' }]);
+      console.error("Error:", err);
     }
-
-    setInput('');
   };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') sendMessage();
-  };
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
 
   return (
-    <div className="chat-app">
-      <div className="chat-header">WhatsApp Chat UI</div>
-
+    <div className="chat-container">
+      <div className="chat-header">ChatBot</div>
       <div className="chat-body">
-        {messages.map((msg, idx) => (
+        {messages.map((msg, index) => (
           <div
-            key={idx}
-            className={`chat-bubble ${msg.sender === 'user' ? 'user' : 'bot'}`}
+            key={index}
+            className={`chat-bubble ${msg.sender === "user" ? "user" : "bot"}`}
           >
-            {msg.text}
+            <div className="chat-text">{msg.message}</div>
+            <div className="chat-time">{msg.time}</div>
           </div>
         ))}
-        <div ref={messagesEndRef}></div>
       </div>
-
-      <div className="chat-input">
+      <form className="chat-input" onSubmit={handleSend}>
         <input
           type="text"
-          placeholder="Type a message"
+          placeholder="Type a message..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
         />
-        <button onClick={sendMessage}>Send</button>
-      </div>
+        <button type="submit">Send</button>
+      </form>
     </div>
   );
-}
+};
 
 export default App;
