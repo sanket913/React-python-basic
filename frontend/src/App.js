@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import './App.css';
 
 function App() {
-  const [message, setMessage] = useState('');
-  const [reply, setReply] = useState('');
+  const [messages, setMessages] = useState([]); // { sender: 'user' | 'bot', text: '' }
+  const [input, setInput] = useState('');
+  const messagesEndRef = useRef(null);
 
-  const handleSend = async () => {
-    if (!message.trim()) return;
+  const sendMessage = async () => {
+    if (!input.trim()) return;
+
+    // Add user message
+    const userMsg = { sender: 'user', text: input };
+    setMessages(prev => [...prev, userMsg]);
 
     try {
       const res = await fetch('https://react-python-basic.onrender.com/chat', {
@@ -13,37 +19,50 @@ function App() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message: input }),
       });
 
       const data = await res.json();
-      setReply(data.reply);
-    } catch (error) {
-      console.error('Error:', error);
-      setReply('Error connecting to the bot.');
+      const botMsg = { sender: 'bot', text: data.reply };
+      setMessages(prev => [...prev, botMsg]);
+    } catch (err) {
+      const errorMsg = { sender: 'bot', text: 'Error: Unable to reach server.' };
+      setMessages(prev => [...prev, errorMsg]);
     }
+
+    setInput('');
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') sendMessage();
+  };
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
   return (
-    <div style={{ padding: '30px', textAlign: 'center' }}>
-      <h2>React + Python Chat</h2>
-      <input
-        style={{ padding: '10px', width: '300px' }}
-        type="text"
-        placeholder="Type your message..."
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-      />
-      <br /><br />
-      <button onClick={handleSend} style={{ padding: '10px 20px' }}>
-        Send
-      </button>
-      <br /><br />
-      {reply && (
-        <div style={{ border: '1px solid #ccc', padding: '15px', width: '300px', margin: '0 auto' }}>
-          <strong>Bot:</strong> {reply}
-        </div>
-      )}
+    <div className="chat-container">
+      <h2>💬 Chat with Python Bot</h2>
+      <div className="chat-box">
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`chat-bubble ${msg.sender}`}>
+            {msg.text}
+          </div>
+        ))}
+        <div ref={messagesEndRef}></div>
+      </div>
+
+      <div className="input-area">
+        <input
+          type="text"
+          placeholder="Type your message..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyPress}
+        />
+        <button onClick={sendMessage}>Send</button>
+      </div>
     </div>
   );
 }
