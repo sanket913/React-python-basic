@@ -1,24 +1,21 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 
 function App() {
-  const [messages, setMessages] = useState([]); // { sender: 'user' | 'bot', text: '' }
   const [input, setInput] = useState('');
+  const [messages, setMessages] = useState([]); // [{ sender: 'user' | 'bot', text: '' }]
   const messagesEndRef = useRef(null);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
 
-    // Add user message
     const userMsg = { sender: 'user', text: input };
     setMessages(prev => [...prev, userMsg]);
 
     try {
       const res = await fetch('https://react-python-basic.onrender.com/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: input }),
       });
 
@@ -26,14 +23,13 @@ function App() {
       const botMsg = { sender: 'bot', text: data.reply };
       setMessages(prev => [...prev, botMsg]);
     } catch (err) {
-      const errorMsg = { sender: 'bot', text: 'Error: Unable to reach server.' };
-      setMessages(prev => [...prev, errorMsg]);
+      setMessages(prev => [...prev, { sender: 'bot', text: 'Server error.' }]);
     }
 
     setInput('');
   };
 
-  const handleKeyPress = (e) => {
+  const handleKeyDown = (e) => {
     if (e.key === 'Enter') sendMessage();
   };
 
@@ -42,24 +38,28 @@ function App() {
   }, [messages]);
 
   return (
-    <div className="chat-container">
-      <h2>💬 Chat with Python Bot</h2>
-      <div className="chat-box">
+    <div className="chat-app">
+      <div className="chat-header">WhatsApp Chat UI</div>
+
+      <div className="chat-body">
         {messages.map((msg, idx) => (
-          <div key={idx} className={`chat-bubble ${msg.sender}`}>
+          <div
+            key={idx}
+            className={`chat-bubble ${msg.sender === 'user' ? 'user' : 'bot'}`}
+          >
             {msg.text}
           </div>
         ))}
         <div ref={messagesEndRef}></div>
       </div>
 
-      <div className="input-area">
+      <div className="chat-input">
         <input
           type="text"
-          placeholder="Type your message..."
+          placeholder="Type a message"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyPress}
+          onKeyDown={handleKeyDown}
         />
         <button onClick={sendMessage}>Send</button>
       </div>
