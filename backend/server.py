@@ -2,12 +2,12 @@ import http.server
 import socketserver
 import os
 import json
+from datetime import datetime
 
 PORT = 5000
 
 class MyHandler(http.server.SimpleHTTPRequestHandler):
     
-    # Handle CORS Preflight for POST requests
     def do_OPTIONS(self):
         self.send_response(200, "ok")
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -15,27 +15,46 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
-    # Only POST /chat supported
     def do_POST(self):
         if self.path == '/chat':
             content_length = int(self.headers.get('Content-Length', 0))
             body = self.rfile.read(content_length)
 
             try:
-                # Parse JSON input from frontend
                 data = json.loads(body.decode('utf-8'))
-                user_message = data.get('message', '')
-                print(f"User said: {user_message}")
+                user_message = data.get('message', '').strip()
+                print(f"[User] {user_message}")
 
-                # Static response message (can be customized)
-                reply = f"Hello! You said: {user_message}"
+                # Format time for reply
+                timestamp = datetime.now().strftime("%H:%M")
 
-                response = {'reply': reply}
+                # Example logic: static response based on input
+                if user_message.lower() in ['hi', 'hello']:
+                    reply_text = "Hello! How can I help you today?"
+                elif user_message.lower() in ['bye', 'exit']:
+                    reply_text = "Goodbye! Have a nice day 😊"
+                else:
+                    reply_text = f"You said: {user_message}"
+
+                response = {
+                    "reply": {
+                        "sender": "bot",
+                        "message": reply_text,
+                        "time": timestamp
+                    }
+                }
+
                 response_data = json.dumps(response)
-            except Exception as e:
-                response_data = json.dumps({'reply': f"Error: {str(e)}"})
 
-            # Send JSON response
+            except Exception as e:
+                response_data = json.dumps({
+                    "reply": {
+                        "sender": "bot",
+                        "message": f"Error: {str(e)}",
+                        "time": datetime.now().strftime("%H:%M")
+                    }
+                })
+
             self.send_response(200)
             self.send_header("Content-type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")
