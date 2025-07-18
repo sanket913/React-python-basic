@@ -41,7 +41,7 @@ const App = () => {
         {messages.map((msg, index) => (
           <div
             key={index}
-            className={chat-bubble ${msg.sender === "user" ? "user" : "bot"}}
+            className={`chat-bubble ${msg.sender === "user" ? "user" : "bot"}`}
           >
             <div className="chat-text">{msg.message}</div>
             <div className="chat-time">{msg.time}</div>
