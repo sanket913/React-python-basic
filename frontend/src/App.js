@@ -5,7 +5,7 @@ function App() {
 
   const callPythonScript = async () => {
     try {
-      const res = await fetch('https://hello-backend.onrender.com/run-script');
+      const res = await fetch('https://react-python-basic.onrender.com/run-script');
       const data = await res.json();
       setResponse(data.message);
     } catch (error) {
