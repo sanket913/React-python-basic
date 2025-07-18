@@ -1,9 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import "./App.css";
 
 const App = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const chatEndRef = useRef(null);
+
+  // Scroll to bottom when messages update
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -26,7 +34,11 @@ const App = () => {
       });
 
       const data = await res.json();
-      const botMessage = data.reply;
+      const botMessage = {
+        sender: "bot",
+        message: data.reply,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
 
       setMessages((prev) => [...prev, botMessage]);
     } catch (err) {
@@ -47,6 +59,7 @@ const App = () => {
             <div className="chat-time">{msg.time}</div>
           </div>
         ))}
+        <div ref={chatEndRef} />
       </div>
       <form className="chat-input" onSubmit={handleSend}>
         <input
